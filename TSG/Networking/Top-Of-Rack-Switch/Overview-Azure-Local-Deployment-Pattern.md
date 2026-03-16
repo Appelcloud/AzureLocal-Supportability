@@ -82,7 +82,7 @@ A balanced design where all traffic types (management, compute, storage) share t
 | Deployment Pattern  | Host NIC Configuration | ToR Switch VLAN Configuration | Primary Use Cases |
 |---------------------|------------------------|-------------------------------|-------------------|
 | **Switchless** | 2 NICs to switches (M+C traffic) + (N−1) direct inter-node NICs (S traffic) | Trunk ports with M, C VLANs only; no storage VLANs on ToRs | Edge deployments, remote sites, cost-sensitive environments |
-| **Switched** | 4 NICs per host: 2 for M+C traffic, 2 dedicated for storage | M and C VLANs on both ToRs; S1 VLAN on ToR1 only, S2 VLAN on ToR2 only (dedicated storage NICs) | Enterprise deployments requiring dedicated storage performance and traffic isolation |
+| **Switched** | 4 NICs per host: 2 for M+C traffic, 2 dedicated for storage | M and C VLANs on both ToRs; S1 VLAN on ToR-A only, S2 VLAN on ToR-B only (dedicated storage NICs) | Enterprise deployments requiring dedicated storage performance and traffic isolation |
 | **Fully Converged** | 2 NICs per host carrying all traffic types (M+C+S) via VLAN segmentation | S1 VLAN on ToR-A only, S2 VLAN on ToR-B only (recommended) | General-purpose deployments balancing performance, simplicity, and hardware efficiency |
 
 > [!NOTE]
