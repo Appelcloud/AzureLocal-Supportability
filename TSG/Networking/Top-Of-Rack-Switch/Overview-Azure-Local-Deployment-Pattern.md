@@ -86,7 +86,7 @@ A balanced design where all traffic types (management, compute, storage) share t
 | **Fully Converged** | 2 NICs per host carrying all traffic types (M+C+S) via VLAN segmentation | S1 VLAN on ToR-A only, S2 VLAN on ToR-B only (recommended) | General-purpose deployments balancing performance, simplicity, and hardware efficiency |
 
 > [!NOTE]
-> **Storage VLAN Configuration**: Storage VLANs can be configured as either **Layer 3 (L3) networks with IP subnets** or **Layer 2 (L2) networks without IP subnets**. **Layer 2 configuration is recommended** because it simplifies VLAN tagging, allowing Azure Local hosts to use any IP addresses without hardcoding subnet configurations on the switch or requiring predefined IP ranges. Since Azure Local nodes handle storage traffic tagging, ensure these VLANs are configured as **tagged VLANs on trunk ports** on their respective ToR switches.
+> **Storage VLAN Configuration**: Storage VLANs can be configured as either **Layer 3 (L3) networks with IP subnets** or **Layer 2 (L2) networks without IP subnets**. **Layer 2 configuration is recommended** because it simplifies VLAN tagging, allowing Azure Local hosts to use any IP addresses without hardcoding subnet configurations on the switch or requiring predefined IP ranges. For the recommended deployment patterns in this document, storage VLANs must be configured as **tagged VLANs on trunk ports only on their respective ToR switches**, and **must not be tagged across all ToR switches** unless you are intentionally implementing a non-recommended, legacy, or special-case design that explicitly requires global storage VLAN reachability.
 
 
 ---
