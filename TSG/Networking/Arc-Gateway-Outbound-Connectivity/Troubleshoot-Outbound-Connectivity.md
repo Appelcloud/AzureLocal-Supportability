@@ -259,7 +259,7 @@ $Result.HealthCheckResult | Out-File "C:\Temp\HealthResult-$((Get-Cluster).Name)
 $Result.HealthCheckResult | ConvertTo-Json -Depth 10 | Out-File "C:\Temp\HealthResult-$((Get-Cluster).Name).json"
 ```
 
-For additional information for how to analyze and understand the **$Results.HealthCheckResult** array, refer to this article: [Solution Update Readiness Checker - "using PowerShell" section](https://learn.microsoft.com//azure/azure-local/update/update-troubleshooting-23h2?view=azloc-24113#using-powershell).
+For additional information for how to analyze and understand the **$Results.HealthCheckResult** array, refer to this article: [Solution Update Readiness Checker - "using PowerShell" section](https://learn.microsoft.com/azure/azure-local/update/update-troubleshooting-23h2?view=azloc-24113#using-powershell).
 
 ## How to get additional support
 
