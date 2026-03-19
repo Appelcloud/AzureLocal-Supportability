@@ -2,7 +2,7 @@
 
 ## Overview
 
-Connected instances of Azure Local require outbound / egress network connectivity from the management network of each Azure Local instance to a list of public endpoints. Network connectivity to these endpoints is required for Azure Local to use Azure as a reliable management and control plane, such as for initial instance deployment, applying updates and for workload provisioning operational capabilities. Allowing connectivity to the list of endpoints is a prerequisite for deployment, but ongoing connectivity to the list of endpoints is vital for support, manageability and licensing compliance. The list of requirements endpoints varies depending on the customer scenario, for example the list of endpoints is reduced when using an Azure Arc Gateway, and varies (slightly) based on the which Azure region is selected.
+Connected instances of Azure Local require outbound / egress network connectivity from the management network of each Azure Local instance to a list of public endpoints. Network connectivity to these endpoints is required for Azure Local to use Azure as a reliable management and control plane, such as for initial instance deployment, applying updates and for workload provisioning operational capabilities. Allowing connectivity to the list of endpoints is a prerequisite for deployment, but ongoing connectivity to the list of endpoints is vital for support, manageability and licensing compliance. The list of required endpoints varies depending on the customer scenario, for example the list of endpoints is reduced when using an Azure Arc Gateway, and varies (slightly) based on which Azure region is selected.
 
 For additional information on Azure Local Firewall requirements, please review - [Azure Local Firewall documentation](https://learn.microsoft.com/azure/azure-local/concepts/firewall-requirements).
 
@@ -95,7 +95,7 @@ Install-Module -Name "AzStackHci.DiagnosticSettings" -Repository PSGallery
 
 # To test an individual endpoint (after installing the module), with
 # Verbose and Debug output, use the "Test-Layer7Connectivity" function, as shown below:
-$url = 'graph.microsoft.com/v1.0/'
+$url = 'https://graph.microsoft.com/v1.0/'
 Test-Layer7Connectivity -url $url -port 443 -Verbose -Debug
 ```
 
@@ -129,7 +129,6 @@ All output files are saved to: `C:\ProgramData\AzStackHci.DiagnosticSettings\`
 Output files generated:
 
 | File | Description |
-|------|-------------|
 | `AzureLocal_ConnectivityTest_<Region>_<Hostname>_<DateTime>.html` | HTML report (default) or `.csv` if `-OutputFormat CSV` is used |
 | `AzureLocal_ConnectivityTest_<Region>_<Hostname>_<DateTime>.json` | JSON test results with summary metadata (always generated) |
 | `Transcript_AzureLocal_ConnectivityTest_<Region>_<Hostname>_<DateTime>.log` | PowerShell transcript log |
@@ -175,7 +174,7 @@ param (
     [System.Uri]$ArcGatewayURL,
 
     # Custom DNS Name for NTP Time Server (no http:// or https:// prefix).
-    # Example: yourtimeserver.fqdn, this can be your on-premises AD domain FDQN, if using AD integrated NTP service (PDC).
+    # Example: yourtimeserver.fqdn, this can be your on-premises AD domain FQDN, if using AD integrated NTP service (PDC).
     [string]$NTPTimeServer,
 
     # Include tests for TCP connectivity (for scenarios not using a Proxy).
