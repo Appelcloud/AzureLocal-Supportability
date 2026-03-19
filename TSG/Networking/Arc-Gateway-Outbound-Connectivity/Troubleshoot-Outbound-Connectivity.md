@@ -129,6 +129,7 @@ All output files are saved to: `C:\ProgramData\AzStackHci.DiagnosticSettings\`
 Output files generated:
 
 | File | Description |
+|------|-------------|
 | `AzureLocal_ConnectivityTest_<Region>_<Hostname>_<DateTime>.html` | HTML report (default) or `.csv` if `-OutputFormat CSV` is used |
 | `AzureLocal_ConnectivityTest_<Region>_<Hostname>_<DateTime>.json` | JSON test results with summary metadata (always generated) |
 | `Transcript_AzureLocal_ConnectivityTest_<Region>_<Hostname>_<DateTime>.log` | PowerShell transcript log |
