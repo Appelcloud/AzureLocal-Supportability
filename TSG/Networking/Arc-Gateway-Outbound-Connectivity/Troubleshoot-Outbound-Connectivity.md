@@ -245,10 +245,10 @@ To view the output from **all tests** included Azure Local **Solution Update Rea
 
 ```PowerShell
 # Check Solution Update Environment
-$Result = Get-SolutionUpdateEnvironment
+$Result = Get-SolutionUpdateEnvironment -FullHealthCheckDetails
 
 # View "not equal to SUCCESS" alerts
-$Result.HealthCheckResult | Where-Object {$_.Status -ne "SUCCESS"} | Format-List Title, Status, Severity, Description, Remediation
+$Result.HealthCheckResult | Where-Object {$_.Status -ne "SUCCESS"} | Format-List Title, Status, Severity, Description, AdditionalData Remediation
 
 # Create "C:\Temp" folder, if it does not exist
 if(-not(Test-Path "C:\Temp\")) { New-Item -Path "C:\Temp\" -Type Directory | Out-Null }
