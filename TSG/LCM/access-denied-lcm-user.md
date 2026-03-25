@@ -166,150 +166,148 @@ The user should have the following permissions on the OU:
  
 If you do not see all of these ActiveDirectoryRights listed for this user, please follow [instructions to prepare active directory](https://learn.microsoft.com/en-us/azure/azure-local/deploy/deployment-prep-active-directory?view=azloc-2503), including running the `AsHciADArtifactsPreCreationTool` listed in the wiki to ensure all permissions are set appropriately for the user. Ensure these same permissions are applied to all OU objects and their descendents.
 
-### WinRM Trusted Hosts Configuration
-
+### WinRM TrustedHosts Configuration
+TrustedHosts should be checked on each node for correct configuration.
 ```Powershell
 Get-Item WSMan:\localhost\Client\TrustedHosts
 ```
 
-This file should contain the ips or hostnames of each of the nodes in your cluster. To set this file, use this command and specify all hostnames and ip-addresses in your cluster delimited by commas.
+TrustedHosts should include the following:
+- Each cluster node's hostname
+- Each cluster node's IP address
+- Each cluster node's FQDN
 
-```Powershell
-Set-Item WSMan:\localhost\Client\TrustedHosts -Value hostname1,hostname2,192.168.0.1,192.168.0.2
+To set TrustedHosts, use one of the commands below and replace the placeholder values with your cluster node hostnames, IPs, and FQDNs.
+
+```PowerShell
+# Setting and overwriting all values
+Set-Item WSMan:\localhost\Client\TrustedHosts -Value "hostname1,hostname2,192.168.0.1,192.168.0.2,hostname1.contoso.local,hostname2.contoso.local" -Force
+```
+```PowerShell
+# Adding missing values to existing TrustedHosts
+Set-Item WSMan:\localhost\Client\TrustedHosts -Value "hostname1.contoso.local,hostname2.contoso.local" -Concatenate -Force
 ```
 
 # Scripts
 ### Validating LCM (User Deployment) Credentials Match the ECE Store
 
-### Prerequisites
-Ensure the certificate with subject name CN=DscEncryptionCert is not missing or expired. If so, please run the below action plan to generate the "CN=RuntimeParameterEncryptionCert" instead. 
-NOTE: If the below action plan is run, then the "DeleteEncryptionCertificate" action plan should also be run to delete the generated certificate, once mitigation is completed.
+NOTE: Please note that the LCM Username should be provided without domain and not contain any special characters. To Validate that the username provided is of the correct format, run:
 
-```PowerShell
-# Import necessary modules
-Import-Module "ECEClient" 3>$null 4>$null
-Import-Module "C:\Program Files\WindowsPowerShell\Modules\Microsoft.AS.Infra.Security.SecretRotation\Microsoft.AS.Infra.Security.ActionPlanExecution.psm1" -DisableNameChecking
+```Powershell
 
-$ActionType = "GenerateEncryptionCertificate"
-    $Params = @{
-        TimeoutInSecs = 10 * 60
-        RetryCount = "2"
-        ExclusiveLock = $true
-        RolePath = "SecretRotation"
-        ActionType = $ActionType
-        ActionPlanInstanceId = [Guid]::NewGuid()
-    }
-
-    Write-AzsSecurityVerbose -Message "Generating encryption certificate. Action plan Instance ID: $($Params.ActionPlanInstanceId)" -Verbose
-    $ActionPlanInstance = Start-ActionPlan @Params 3>$null 4>$null
-```
-
-To delete the "CN=RuntimeParameterEncryptionCert" **once mitigation is completed**, please run:
-
-```PowerShell
-# Import necessary modules
-Import-Module "ECEClient" 3>$null 4>$null
-Import-Module "C:\Program Files\WindowsPowerShell\Modules\Microsoft.AS.Infra.Security.SecretRotation\Microsoft.AS.Infra.Security.ActionPlanExecution.psm1" -DisableNameChecking
-
-$ActionType = "DeleteEncryptionCertificate"
-    $Params = @{
-        TimeoutInSecs = 10 * 60
-        RetryCount = "2"
-        ExclusiveLock = $true
-        RolePath = "SecretRotation"
-        ActionType = $ActionType
-        ActionPlanInstanceId = [Guid]::NewGuid()
-    }
-
-    Write-AzsSecurityVerbose -Message "Deleting encryption certificate. Action plan Instance ID: $($Params.ActionPlanInstanceId)" -Verbose
-    $ActionPlanInstance = Start-ActionPlan @Params 3>$null 4>$null
-    return $ActionPlanInstance
-```
-
-Please input your LCM user credentials when prompted. **DO NOT include the domain as part of the username in the credential**.
-
-```PowerShell
-$credential = Get-Credential
-
-# Validate credentials
-try {
-    # Attempt to invoke a simple command (Get-Process) on the local machine to validate credentials
-    Invoke-Command -ScriptBlock { whoami } -Credential $credential -ErrorAction Stop -ComputerName localhost
-
-    Write-Host "Credential validation successful." -ForegroundColor Green
-}
-catch {
-    Write-Host "Credential validation failed. Please check the username and password." -ForegroundColor Red
-    return
-}
-
-# Import necessary modules
-Import-Module "ECEClient" 3>$null 4>$null
-Import-Module "C:\Program Files\WindowsPowerShell\Modules\Microsoft.AS.Infra.Security.SecretRotation\Microsoft.AS.Infra.Security.ActionPlanExecution.psm1" -DisableNameChecking
-Import-Module "C:\Program Files\WindowsPowerShell\Modules\Microsoft.AS.Infra.Security.SecretRotation\PasswordUtilities.psm1" -DisableNameChecking
-
-# Print the User Name
-Write-Host "Username provided: $($credential.UserName)" -ForegroundColor Cyan
-
-# Validate that the username provided is of the correct format. Username should be provided without domain and not contain any special characters.
 if ($credential.UserName -match '^[^\\]+(?=\\)|(?<=@).+$') {
     throw "Please provide user name without domain."
 }
+```
+Proceed with credential validation:
 
-# Create ECE client and get the stamp version
-$eceClient = Create-ECEClusterServiceClient
-$stampVersion = $eceClient.GetStampVersion().GetAwaiter().GetResult()
+NOTE: Please run the below 'CredentialsHelper' from the seed node. 
+To find the seed node :
 
-# Define certificate path
-$certPath = "Cert:\LocalMachine\My"  # Change this path if the cert is located elsewhere
+```Powershell
+$owner_node = (Get-ClusterResource *Orc*).OwnerNode.Name
+$owner_node
+```
 
-# Check if RuntimeParameterEncryptionCert exists
-$certName = "RuntimeParameterEncryptionCert"
-$certificate = Get-ChildItem -Path $certPath | Where-Object { $_.Subject -like "*$certName*" }
+```Powershell
 
-# If RuntimeParameterEncryptionCert is not found, check for DscEncryptionCert
-if (-not $certificate) {
-    Write-AzsSecurityVerbose -Message "RuntimeParameterEncryptionCert not found. Checking for DscEncryptionCert." -Verbose
-    $certName = "DscEncryptionCert"
-    $certificate = Get-ChildItem -Path $certPath | Where-Object { $_.Subject -like "*$certName*" }
+function CredentialsHelper
+{
+[CmdletBinding(DefaultParameterSetName = 'VerifyCredential')]
+    param (
+        [Parameter(Mandatory, ParameterSetName = 'WithCredential')]
+        [pscredential]
+        $Credential,
 
-    # If DscEncryptionCert is also not found, throw an error
-    if (-not $certificate) {
-        throw "Neither RuntimeParameterEncryptionCert nor DscEncryptionCert found in the certificate store."
-    }
-} else {
-    Write-AzsSecurityVerbose -Message "Found RuntimeParameterEncryptionCert." -Verbose
+        [Parameter(Mandatory, ParameterSetName = 'FetchLCMUserName')]
+        [switch]
+        $FetchUsername
+    )
+
+    try
+        {
+        # Retrieve the latest ECEWinService NuGet Version
+        $eceWinService = Get-ChildItem "C:\Agents" -Directory |
+            Where-Object { $_.Name -match 'Microsoft\.AzureStack\.Solution\.ECEWinService\.(\d+\.\d+\.\d+\.\d+)' } |
+            ForEach-Object {
+                [PSCustomObject]@{
+                    Path = $_.FullName
+                    Version = [version]$matches[1]
+                }
+            } |
+            Sort-Object Version -Descending |
+            Select-Object -First 1
+
+        $eceWinServiceVersion = $eceWinService.Version.ToString()
+        $eceWinServicePath = $eceWinService.Path
+
+        # Load Assemblies
+        [System.Reflection.Assembly]::LoadFile("$eceWinServicePath\content\ECEWinService\CloudEngine.dll") | Out-Null
+        [System.Reflection.Assembly]::LoadFile("$eceWinServicePath\content\ECEWinService\Microsoft.AzureStack.Orchestration.Common.Packaging.Contract.dll") | Out-Null
+        [System.Reflection.Assembly]::LoadFile("$eceWinServicePath\content\ECEWinService\Microsoft.AzureStack.Orchestration.Common.Packaging.dll") | Out-Null
+        [System.Reflection.Assembly]::LoadFile("$eceWinServicePath\content\ECEWinService\Microsoft.Diagnostics.Tracing.EventSource.dll") | Out-Null
+
+        # Load MetricTelemetry.dll if it exists, otherwise fallback to Telemetry.dll
+        $metricTelemetryPath = "$eceWinServicePath\content\ECEWinService\Microsoft.AzureStack.Solution.MetricTelemetry.dll"
+        $telemetryPath = "$eceWinServicePath\content\ECEWinService\Microsoft.AzureStack.Solution.Telemetry.dll"
+
+        if (Test-Path $metricTelemetryPath) {
+            [System.Reflection.Assembly]::LoadFile($metricTelemetryPath) | Out-Null
+        } elseif (Test-Path $telemetryPath) {
+            [System.Reflection.Assembly]::LoadFile($telemetryPath) | Out-Null
+        } else {
+            Write-Warning "Neither MetricTelemetry.dll nor Telemetry.dll found in $eceWinServicePath"
+        }
+
+        #Retrieve LCM User Username
+        Import-Module ECEClient 3>$null 4>$null
+        $eceClient = Create-ECEClusterServiceClient
+        $cloudDefinitionAsXmlString = (Get-CloudDefinition -EceClient $eceClient).CloudDefinitionAsXmlString
+        $cloudDefElements = [System.Xml.Linq.XElement]::Parse($cloudDefinitionAsXmlString)
+ 
+        $customerConfigurationObject = New-Object -TypeName 'CloudEngine.Configurations.CustomerConfiguration' -ArgumentList $cloudDefElements
+        $cloudRoleObject = [CloudEngine.Configurations.ConfigurationPathExtensions]::Find($customerConfigurationObject, 'Cloud')
+        [CloudEngine.Configurations.IInterface] $interface = $cloudRoleObject.Interface('Build')
+        $eceParams = $interface.GetInterfaceParameters()
+ 
+        $securityInfo = $ECEParams.Roles["Cloud"].PublicConfiguration.PublicInfo.SecurityInfo
+        $DAdmin = $securityInfo.DomainUsers.User | Where Role -eq "DomainAdmin"
+
+        $DAAdminUserCredential = $ECEParams.GetCredential($DAdmin.Credential) 
+
+        if ($FetchUsername)
+        {
+            Write-AzsSecurityVerbose "Your LCM username is: $($DAAdminUserCredential.UserName)" -Verbose
+            return
+        }
+
+        $DAAdminUserPassword = $DAAdminUserCredential.GetNetworkCredential().password
+
+        $userProvidedPassword = $Credential.GetNetworkCredential().Password
+        $userProvidedUserName = $Credential.GetNetworkCredential().UserName
+
+        if ($DAAdminUserCredential.UserName -ne $userProvidedUserName)
+        {
+            Write-AzsSecurityWarning -Message "Provided LCM credential user name does not match the one in ECE." -Verbose
+        }
+
+        if ($DAAdminUserPassword -eq $userProvidedPassword)
+        {
+            Write-AzsSecurityVerbose -Message "Found matching credentials in ECE store." -Verbose
+        }
+        else
+        {
+            Write-AzsSecurityWarning -Message "Could not find matching credentials in ECE store. Please proceed with mitigation to update LCM user password in ECE." -Verbose
+        }
+        }
+        catch
+        {
+            Write-AzsSecurityWarning -Message "There was an issue verifying credentials. Error $_. Please reach out to Microsoft support for help" -Verbose
+        }
 }
 
-# Convert the SecureString password to an encrypted standard string using the selected certificate
-$encryptedPassword = $credential.GetNetworkCredential().Password | Protect-CmsMessage -To "CN=$certName"
-
-# Validate credentials in ECE
-$ValidateParams = @{
-    TimeoutInSecs = 10 * 60
-    RetryCount = "2"
-    ExclusiveLock = $true
-    RolePath = "SecretRotation"
-    ActionType = "ValidateCredentials"
-    ActionPlanInstanceId = [Guid]::NewGuid()
-}
-$ValidateParams['RuntimeParameters'] = @{
-    UserName = $credential.GetNetworkCredential().UserName
-    Password = $encryptedPassword
-}
-
-Write-AzsSecurityVerbose -Message "Validating credentials in ECE.`r`nStarting action plan with Instance ID: $($ValidateParams.ActionPlanInstanceId)" -Verbose
-$ValidateActionPlanInstance = Start-ActionPlan @ValidateParams 3>$null 4>$null
-
-if ($ValidateActionPlanInstance -eq $null) {
-    Write-AzsSecurityWarning -Message "There was an issue running the action plan. Please reach out to Microsoft support for help" -Verbose
-}
-elseif ($ValidateActionPlanInstance.Status -eq 'Failed') {
-    Write-AzsSecurityWarning -Message "Could not find matching credentials in ECE store." -Verbose
-}
-elseif ($ValidateActionPlanInstance.Status -eq 'Completed') {
-    Write-AzsSecurityVerbose -Message "Found matching credentials in ECE store." -Verbose
-}
+$lcmCredentials = Get-Credential
+CredentialsHelper -Credential $lcmCredentials
 ```
 
 ### Mitigation
@@ -355,11 +353,6 @@ Write-AzsSecurityVerbose -Message "Updating password in ECE" -Verbose
 $ECEContainersToUpdate = @(
     "DomainAdmin",
     "DeploymentDomainAdmin",
-    "SecondaryDomainAdmin",
-    "TemporaryDomainAdmin",
-    "BareMetalAdmin",
-    "FabricAdmin",
-    "SecondaryFabric",
     "CloudAdmin"
 )
 
@@ -369,60 +362,13 @@ foreach ($containerName in $ECEContainersToUpdate) {
 
 Write-AzsSecurityVerbose -Message "Finished updating credentials in ECE." -Verbose
 ```
-
-NOTE: If the "CN=RuntimeParameterEncryptionCert" was generated using the "GenerateEncryptionCertificate" action, then please run the "DeleteEncryptionCertificate" action plan to clean up the certificate.
-
 ### Retrieving Your LCM (deployment user) Username
 Run the following script on your HCI node to retrieve the LCM username:
 
+NOTE: Please copy and run the 'CredentialsHelper' from the above "Validating LCM (User Deployment) Credentials Match the ECE Store" section.
+
 ```Powershell
-# Retrieve the latest ECEWinService NuGet Version
-$eceWinService = Get-ChildItem "C:\Agents" -Directory |
-    Where-Object { $_.Name -match 'Microsoft\.AzureStack\.Solution\.ECEWinService\.(\d+\.\d+\.\d+\.\d+)' } |
-    ForEach-Object {
-        [PSCustomObject]@{
-            Path = $_.FullName
-            Version = [version]$matches[1]
-        }
-    } |
-    Sort-Object Version -Descending |
-    Select-Object -First 1
-
-$eceWinServiceVersion = $eceWinService.Version.ToString()
-$eceWinServicePath = $eceWinService.Path
-
-# Load Assemblies
-[System.Reflection.Assembly]::LoadFile("$eceWinServicePath\content\ECEWinService\CloudEngine.dll") | Out-Null
-[System.Reflection.Assembly]::LoadFile("$eceWinServicePath\content\ECEWinService\Microsoft.AzureStack.Orchestration.Common.Packaging.Contract.dll") | Out-Null
-[System.Reflection.Assembly]::LoadFile("$eceWinServicePath\content\ECEWinService\Microsoft.AzureStack.Orchestration.Common.Packaging.dll") | Out-Null
-[System.Reflection.Assembly]::LoadFile("$eceWinServicePath\content\ECEWinService\Microsoft.Diagnostics.Tracing.EventSource.dll") | Out-Null
-
-# Load MetricTelemetry.dll if it exists, otherwise fallback to Telemetry.dll
-$metricTelemetryPath = "$eceWinServicePath\content\ECEWinService\Microsoft.AzureStack.Solution.MetricTelemetry.dll"
-$telemetryPath = "$eceWinServicePath\content\ECEWinService\Microsoft.AzureStack.Solution.Telemetry.dll"
-
-if (Test-Path $metricTelemetryPath) {
-    [System.Reflection.Assembly]::LoadFile($metricTelemetryPath) | Out-Null
-} elseif (Test-Path $telemetryPath) {
-    [System.Reflection.Assembly]::LoadFile($telemetryPath) | Out-Null
-} else {
-    Write-Warning "Neither MetricTelemetry.dll nor Telemetry.dll found in $eceWinServicePath"
-}
-
-#Retrieve LCM User Username
-Import-Module ECEClient 3>$null 4>$null
-$eceClient = Create-ECEClusterServiceClient
-$cloudDefinitionAsXmlString = (Get-CloudDefinition -EceClient $eceClient).CloudDefinitionAsXmlString
-$cloudDefElements = [System.Xml.Linq.XElement]::Parse($cloudDefinitionAsXmlString)
- 
-$customerConfigurationObject = New-Object -TypeName 'CloudEngine.Configurations.CustomerConfiguration' -ArgumentList $cloudDefElements
-$cloudRoleObject = [CloudEngine.Configurations.ConfigurationPathExtensions]::Find($customerConfigurationObject, 'Cloud')
-[CloudEngine.Configurations.IInterface] $interface = $cloudRoleObject.Interface('Build')
-$eceParams = $interface.GetInterfaceParameters()
- 
-$securityInfo = $ECEParams.Roles["Cloud"].PublicConfiguration.PublicInfo.SecurityInfo
-$DAdmin = $securityInfo.DomainUsers.User | Where Role -eq "DomainAdmin"
-Write-Output "Your LCM username is: $($DAdmin.Credential.Credential.UserName)"
+CredentialsHelper -FetchUsername
 ```
 
 ### Check NTLM is not Blocked by GPO
