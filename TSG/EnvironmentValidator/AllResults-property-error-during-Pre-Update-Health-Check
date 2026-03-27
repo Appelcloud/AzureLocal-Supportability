@@ -65,7 +65,7 @@ $executionJobs.AllResults += $exceptionResults
 
 ### Step 1: Find the real validator exception
 
-The real exception is captured in the Environment Validator progress file **before** the AllResults crash occurs. On the node that ran the `EnvironmentValidatorPreUpdateJIT` step, (find with ```Get-ClusterGroup '*Orchestrator*' | Select OwnerNode```) open the progress file:
+The real exception is captured in the Environment Validator progress file **before** the AllResults crash occurs. On the node that ran the `EnvironmentValidatorPreUpdateJIT` step, (find with `Get-ClusterGroup '*Orchestrator*' | Select OwnerNode`) open the progress file:
 
 ```powershell
 # On the node where PreUpdateJIT ran
