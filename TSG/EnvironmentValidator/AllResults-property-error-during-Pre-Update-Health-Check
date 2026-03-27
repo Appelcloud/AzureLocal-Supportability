@@ -111,7 +111,7 @@ Refer to the specific validator's TSG based on the validator name shown in the `
 
 After resolving the underlying validator issue, re-run the readiness checks using one of the following methods:
 
-** Re-run system health checks (recommended first step):**
+**Re-run system health checks (recommended first step):**
 
 ```powershell
 # Trigger a fresh system health check
