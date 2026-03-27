@@ -143,4 +143,4 @@ If the results are clean, the update can proceed.
 
 - [Troubleshooting MSI Does Not Have Access To Subscription](Troubleshooting-MSI-Does-Not-Have-Access-To-Subscription.md) — common ArcIntegration exception that can trigger this bug
 - [Known Issue: This module requires Az.Accounts version 5.3.0](Known-Issue-This-module-requires-Az-Accounts-version-5-3-0.md) — module version issues can cause validator exceptions
-- [Update Troubleshooting (Microsoft Learn)](https://learn.microsoft.com/en-us/azure/azure-local/update/update-troubleshooting-23h2) — general update readiness check troubleshooting
+- [Update Troubleshooting (Microsoft Learn)](https://learn.microsoft.com/en-us/azure/azure-local/update/update-troubleshooting) — general update readiness check troubleshooting
