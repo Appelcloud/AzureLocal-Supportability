@@ -57,7 +57,7 @@ This breaks the TLS trust chain between NCHostAgent and the Network Controller A
 
 ```mermaid
 flowchart TD
-    A["NCHostAgent starts<br/>Calls <b>FindSdnCert()</b>"] --> B["Query Cert:\LocalMachine\My<br/>for certificates with NC OID"]
+    A["NCHostAgent calls <b>FindSdnCert()</b>"] --> B["Query Cert:\LocalMachine\My<br/>for certificates with NC OID"]
     B --> C{"How many FQDN certs<br/>with NC OID found?"}
     C -- "1 certificate" --> D["✅ Select that certificate<br/><i>Normal behavior</i>"]
     D --> K["NCHostAgent connects<br/>to ApiService successfully"]
