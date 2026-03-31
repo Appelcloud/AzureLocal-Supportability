@@ -84,10 +84,10 @@ if ($resourceIds.Count -gt 0)
 $systemHealthPath = Join-Path "C:\ClusterStorage\Infrastructure_1\Shares\SU1_Infrastructure_1\Updates\HealthCheck" "System"
 if (Test-Path $systemHealthPath)
 {
-    $oldSystemChecks = Get-ChildItem $systemHealthCheckPath | sort LastWriteTime | select -SkipLast 10
+    $oldSystemChecks = Get-ChildItem $systemHealthPath | sort LastWriteTime | select -SkipLast 10
     if ($oldSystemChecks)
     {
-        Write-Host "Removing $(oldSystemChecks.Count) old system health check results."
+        Write-Host "Removing $($oldSystemChecks.Count) old system health check results."
         $removedHC = $true
         $oldSystemChecks | Remove-Item -Force -Verbose
     }
