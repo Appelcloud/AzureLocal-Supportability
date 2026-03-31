@@ -104,7 +104,7 @@ flowchart TD
    
    $certToRemove = Get-Item -Path 'cert:\localmachine\my' | Where-Object {$_.Thumbprint -ieq $certThumbprintToRemove}
    if ($certToRemove) {
-       $certToRemove | Remove-Item -Verbose
+       $certToRemove | Remove-Item -WhatIf # remove the -WhatIf statement once you confirmed the proper certificate is being removed
    }
    ```
 
