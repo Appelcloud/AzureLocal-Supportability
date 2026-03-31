@@ -124,9 +124,6 @@ flowchart TD
    # Expected: Test-SdnHostAgentConnectionStateToApiService and Test-SdnCertificateMultiple should now pass
    ```
 
-6. **Validate VM networking is restored**
-
-   ```powershell
-   # Verify live migration connectivity
-   # Live-migrate a test VM to and from the previously affected host and confirm network connectivity is maintained
-   ```
+1. **Validate VM networking is restored**
+   - Verify live migration connectivity
+   - Live-migrate a test VM to and from the previously affected host and confirm network connectivity is maintained
