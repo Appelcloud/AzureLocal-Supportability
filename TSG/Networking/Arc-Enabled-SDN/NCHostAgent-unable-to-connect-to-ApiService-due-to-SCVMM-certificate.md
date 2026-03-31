@@ -101,9 +101,12 @@ flowchart TD
 
    ```powershell
    $certThumbprintToRemove = '<THUMBPRINT_OF_SCVMM_CERT>'
+   $certStorePath = 'cert:\LocalMachine\My'
    
-   $certToRemove = Get-Item -Path 'cert:\localmachine\my' | Where-Object {$_.Thumbprint -ieq $certThumbprintToRemove}
-   if ($certToRemove) {
+   $certToRemove = Get-ChildItem -Path $certStorePath | Where-Object { $_.Thumbprint -ieq $certThumbprintToRemove }
+   if (-not $certToRemove) {
+       Write-Warning "No certificate with thumbprint '$certThumbprintToRemove' was found in store '$certStorePath'. No changes were made."
+   } else {
        $certToRemove | Remove-Item -WhatIf # remove the -WhatIf statement once you confirmed the proper certificate is being removed
    }
    ```
