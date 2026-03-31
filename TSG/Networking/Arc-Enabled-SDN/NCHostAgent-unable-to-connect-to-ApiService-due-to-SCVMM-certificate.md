@@ -23,7 +23,8 @@
 
 When System Center Virtual Machine Manager (SCVMM) has been previously installed or is co-located in an Azure Local environment using Arc-Enabled SDN, the SCVMM self-signed certificate can interfere with SDN mutual TLS authentication. The SCVMM certificate is tagged with the NetworkController OID, causing SDN components (such as NCHostAgent) to select the wrong certificate when establishing trust. This breaks Network Controller connectivity, SDN policy programming, and VM network operations.
 
-> **Important:** SCVMM is not supported with Arc-Enabled SDN on Azure Local. If SCVMM was previously used, residual certificates must be cleaned up before or after SDN deployment.
+> [!IMPORTANT]
+> SCVMM is not supported with Arc-Enabled SDN on Azure Local. If SCVMM was previously used, residual certificates must be cleaned up before or after SDN deployment.
 
 ## Symptoms
 
