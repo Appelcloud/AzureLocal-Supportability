@@ -84,7 +84,6 @@ flowchart TD
 ### Prerequisites
 
 - Administrative access (local admin or domain admin) to the affected Azure Local host(s)
-- Remote PowerShell access to all cluster nodes
 
 ### Steps
 
