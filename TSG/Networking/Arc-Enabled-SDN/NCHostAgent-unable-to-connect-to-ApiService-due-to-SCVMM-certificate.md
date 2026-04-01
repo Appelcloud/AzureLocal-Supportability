@@ -47,7 +47,8 @@ Test-SdnCertificateMultiple : FAILED
 
 - One or more hosts unable to program SDN policies
 - Live migration to/from affected hosts results in VM network loss
-- `Debug-SdnFabricInfrastructure` reports certificate and connectivity failures
+- `Debug-SdnFabricInfrastructure -NcRestCertificate (Get-SdnServerCertificate)` reports certificate and connectivity failures
+- `Get-SdnServerCertificate` returns multiple certificates
 - Network Controller API calls fail intermittently or consistently from affected hosts
 
 ## Root Cause
@@ -93,7 +94,8 @@ flowchart TD
    On each affected host, open the local machine certificate store and look for the SCVMM self-signed certificate. It will have a subject or friendly name containing `SCVMM_CERTIFICATE_KEY_CONTAINER`.
 
    ```powershell
-   Get-SdnServerCertificate -NetworkControllerOid | Format-List Thumbprint, Subject, NotBefore, NotAfter, Issuer, FriendlyName
+   # SdnDiagnostics 4.2601.27.234 and later builds introduce a -NetworkControllerOid parameter for Get-SdnServerCertificate that should be used
+   Get-SdnServerCertificate | Format-List Thumbprint, Subject, NotBefore, NotAfter, Issuer, FriendlyName
    ```
 
 1. **Remove the conflicting SCVMM certificate**
@@ -122,7 +124,8 @@ flowchart TD
 
    ```powershell
    # Re-run SDN fabric diagnostics to confirm certificate issues are resolved
-   Debug-SdnFabricInfrastructure
+   # SdnDiagnostics 4.2601.27.234 and later builds introduce a -NetworkControllerOid parameter for Get-SdnServerCertificate that should be used
+   Debug-SdnFabricInfrastructure -NcRestCertificate (Get-SdnServerCertificate)
 
    # Verify NCHostAgent connectivity and certificate health pass
    # Expected: Test-SdnHostAgentConnectionStateToApiService and Test-SdnCertificateMultiple should now pass
