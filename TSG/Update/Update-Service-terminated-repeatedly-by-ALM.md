@@ -61,9 +61,10 @@ $installedUpdates = Get-SolutionUpdate | where State -eq Installed
 $resourceIds = @( $installedUpdates | % { $_.ResourceId.Split('/')[-1] } )
 Write-Host "Found $($installedUpdates.Count) installed updates: $($resourceIds -join ", ")"
 
+$removedHC = $false
+
 if ($resourceIds.Count -gt 0)
 {
-    $removedHC = $false
     foreach ($resourceId in $resourceIds)
     {
         $healthCheckPath = Join-Path "C:\ClusterStorage\Infrastructure_1\Shares\SU1_Infrastructure_1\Updates\HealthCheck" $resourceId
@@ -78,21 +79,37 @@ if ($resourceIds.Count -gt 0)
             Write-Host "No health check found for $resourceId at $healthCheckPath"
         }
     }
+}
 
-    if ($removedHC)
+$systemHealthPath = Join-Path "C:\ClusterStorage\Infrastructure_1\Shares\SU1_Infrastructure_1\Updates\HealthCheck" "System"
+if (Test-Path $systemHealthPath)
+{
+    $oldSystemChecks = Get-ChildItem $systemHealthPath | sort LastWriteTime | select -SkipLast 10
+    if ($oldSystemChecks)
     {
-        Write-Host "Some health checks were removed, so clearing update service cache."
-        $clientCert = ls Cert:\LocalMachine\My\ | ? Subject -match "URP" | sort NotAfter | select -last 1
-        $updateEndpoint = "https://$(Get-ClusterGroup *update* | % OwnerNode | % Name).$($env:USERDNSDOMAIN):4900"
-        $clearCacheResult = Invoke-WebRequest -Certificate $clientCert -UseBasicParsing -Uri "$updateEndpoint/caches/Update" -Method "Delete"
-        if ([int]::TryParse($clearCacheResult.Content, [ref]$null))
-        {
-            Write-Host "Removed $($clearCacheResult.Content) updates from the cache."
-        }
-        else
-        {
-            Write-Warning "Unexpected result from clearing the cache: $($clearCacheResult | Out-String)"
-        }
+        Write-Host "Removing $($oldSystemChecks.Count) old system health check results."
+        $removedHC = $true
+        $oldSystemChecks | Remove-Item -Force -Verbose
+    }
+    else
+    {
+        Write-Host "No stale health checks found at $systemHealthPath"
+    }
+}
+
+if ($removedHC)
+{
+    Write-Host "Some health checks were removed, so clearing update service cache."
+    $clientCert = ls Cert:\LocalMachine\My\ | ? Subject -match "URP" | sort NotAfter | select -last 1
+    $updateEndpoint = "https://$(Get-ClusterGroup "Azure Stack HCI Update Service Cluster Group" | % OwnerNode | % Name).$($env:USERDNSDOMAIN):4900"
+    $clearCacheResult = Invoke-WebRequest -Certificate $clientCert -UseBasicParsing -Uri "$updateEndpoint/caches/Update" -Method "Delete"
+    if ([int]::TryParse($clearCacheResult.Content, [ref]$null))
+    {
+        Write-Host "Removed $($clearCacheResult.Content) updates from the cache."
+    }
+    else
+    {
+        Write-Host "Result from clearing the cache: $($clearCacheResult | Out-String)"
     }
 }
 ```
