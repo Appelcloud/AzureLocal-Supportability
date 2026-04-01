@@ -4,6 +4,9 @@ For Network Environment Validator Resources, see [TSG/EnvironmentValidator/Netwo
 
 ## 📚 Table of Contents
 
+### Arc Enabled SDN
+- [Troubleshoot: Conflicting SCVMM Certificate Breaks SDN Connectivity on Azure Local](Arc-Enabled-SDN/NCHostAgent-unable-to-connect-to-ApiService-due-to-SCVMM-certificate.md)
+
 ### Arc Gateway & Outbound Connectivity
 - [Deep Dive: Arc Gateway Outbound Traffic](Arc-Gateway-Outbound-Connectivity/DeepDive-ArcGateway-Outbound-Traffic.md)
 - [Troubleshoot: General Outbound Connectivity](Arc-Gateway-Outbound-Connectivity/Troubleshoot-Outbound-Connectivity.md)
